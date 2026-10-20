@@ -4,6 +4,24 @@
   "description": "CLIProxyAPI dynamic model provider for omp: discovers models from a CLIProxyAPI instance and registers them for use in omp.",
   "license": "MIT",
   "type": "module",
+  "keywords": [
+    "omp-package",
+    "omp-extension",
+    "cliproxyapi",
+    "codex",
+    "provider"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wengzhuohuang/omp-cliproxyapi-provider.git"
+  },
+  "homepage": "https://github.com/wengzhuohuang/omp-cliproxyapi-provider#readme",
+  "bugs": {
+    "url": "https://github.com/wengzhuohuang/omp-cliproxyapi-provider/issues"
+  },
+  "engines": {
+    "bun": ">=1.3.0"
+  },
   "files": [
     "src",
     "README.md"

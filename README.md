@@ -10,12 +10,16 @@ the OpenAI Responses API the proxy exposes at `{root}/v1`.
 ## Install
 
 ```bash
-# from a local checkout
-omp plugin link /absolute/path/to/omp-cliproxyapi-provider
+# from GitHub
+omp plugin install github:wengzhuohuang/omp-cliproxyapi-provider
 
-# or from npm
-omp plugin install omp-cliproxyapi-provider
+# or from a local checkout
+omp plugin link /absolute/path/to/omp-cliproxyapi-provider
 ```
+
+The npm name `omp-cliproxyapi-provider` belongs to an unrelated package, so install
+from GitHub. `omp plugin install` accepts a git spec (`github:`/`gitlab:`/`codeberg:`/…,
+or any `https://…git` URL) and installs the package into `~/.omp/plugins/node_modules/`.
 
 The plugin needs no runtime dependencies: it imports the host packages
 (`@oh-my-pi/pi-ai`, `@oh-my-pi/pi-coding-agent`), which omp resolves to the copies
@@ -150,7 +154,7 @@ subagents and print mode do not.
 ## Development
 
 ```bash
-bun install
+bun install --omit optional   # skips the host's optional native/onnxruntime deps (~300 MB)
 bun test        # unit tests
 bun run typecheck
 ```
