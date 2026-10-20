@@ -158,3 +158,10 @@ bun install --omit optional   # skips the host's optional native/onnxruntime dep
 bun test        # unit tests
 bun run typecheck
 ```
+
+`omp plugin install github:wengzhuohuang/omp-cliproxyapi-provider` installs a git clone
+of this repository, so push a change and refresh the installed copy with:
+
+```bash
+omp plugin upgrade omp-cliproxyapi-provider
+```
