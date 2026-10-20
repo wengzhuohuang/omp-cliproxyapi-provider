@@ -138,7 +138,7 @@ E:/050-ai/omp-cliproxyapi-provider/
   package.json                 # name/version/license + omp.extensions + scripts(bun)
   README.md                    # 安装、登录、命令、配置、FAQ
   src/
-    index.ts                   # 扩展入口：注册 provider / 命令 / 事件（对应 pi index.ts）
+    cliproxyapi.ts             # 扩展入口：注册 provider / 命令 / 事件（对应 pi index.ts）
     config.ts                  # 配置与凭据解析（lib.ts 的 I/O + identity 部分）
     catalog.ts                 # CPA 目录抓取 + 缓存 + 合并（lib.ts 抓取/缓存部分）
     mapping.ts                 # CPA→omp 模型映射（lib.ts toPiModel 改造）
@@ -156,7 +156,7 @@ manifest（omp 原生）：
 {
   "name": "omp-cliproxyapi-provider",
   "type": "module",
-  "omp": { "extensions": ["./src/index.ts"] },
+  "omp": { "extensions": ["./src/cliproxyapi.ts"] },
   "scripts": { "test": "bun test", "typecheck": "tsc --noEmit" }
 }
 ```
