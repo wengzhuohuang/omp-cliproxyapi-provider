@@ -1,3 +1,6 @@
 node_modules/
 *.log
 .DS_Store
+
+# Local design notes: kept in the working tree, never published.
+PLAN.md
