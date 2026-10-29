@@ -85,8 +85,16 @@ export default async function (pi: ExtensionAPI): Promise<void> {
 		logWarn(`invalid pause configuration (${message}); using pause=false`);
 	}
 
+	let refreshQueue: Promise<unknown> = Promise.resolve();
+
 	/** Fetch the proxy catalog and map it onto omp models. */
-	async function refreshCatalog(target: ResolvedConnection | null, apiKeyOverride?: string): Promise<MappedCatalog> {
+	function refreshCatalog(target: ResolvedConnection | null, apiKeyOverride?: string, force = false): Promise<MappedCatalog> {
+		const operation = refreshQueue.then(() => fetchCatalog(target, apiKeyOverride, force));
+		refreshQueue = operation.catch(() => {});
+		return operation;
+	}
+
+	async function fetchCatalog(target: ResolvedConnection | null, apiKeyOverride?: string, force = false): Promise<MappedCatalog> {
 		const baseUrlInput = target?.baseUrlInput ?? DEFAULT_BASE_URL;
 		const endpoints = resolveEndpoints(baseUrlInput);
 		const apiKey = apiKeyOverride ?? target?.apiKey;
@@ -95,7 +103,7 @@ export default async function (pi: ExtensionAPI): Promise<void> {
 		}
 
 		const fresh = await loadMappedCatalog(endpoints.modelsUrl, apiKey);
-		const merged = mergeCatalogWithExistingCache(cached, {
+		const merged = mergeCatalogWithExistingCache(force ? null : cached, {
 			...fresh,
 			inferenceBaseUrl: endpoints.inferenceBaseUrl,
 			modelsUrl: endpoints.modelsUrl,
@@ -108,7 +116,8 @@ export default async function (pi: ExtensionAPI): Promise<void> {
 	}
 
 	/** Re-register the provider so the session picks up a new model list. */
-	function registerProvider(target: ResolvedConnection | null, nextCatalog: MappedCatalog): void {
+	function registerProvider(target: ResolvedConnection | null, nextCatalog: MappedCatalog, syncSnapshot = false): () => void {
+		let pendingSnapshot = syncSnapshot ? nextCatalog : null;
 		const baseUrl = target?.inferenceBaseUrl ?? resolveEndpoints(DEFAULT_BASE_URL).inferenceBaseUrl;
 		const models = nextCatalog.models.map(toProviderModelConfig);
 		pi.registerProvider(providerId, {
@@ -123,10 +132,16 @@ export default async function (pi: ExtensionAPI): Promise<void> {
 				login,
 			},
 			fetchDynamicModels: async (apiKey) => {
+				if (pendingSnapshot) {
+					const snapshot = pendingSnapshot;
+					pendingSnapshot = null;
+					return snapshot.models.map(toProviderModelConfig);
+				}
 				const live = await refreshCatalog(target ?? connection, apiKey);
 				return live.models.map(toProviderModelConfig);
 			},
 		});
+		return () => { pendingSnapshot = null; };
 	}
 
 	/** `/login` flow: collect base URL + API key, validate, and persist. */
@@ -158,8 +173,16 @@ export default async function (pi: ExtensionAPI): Promise<void> {
 		description: "Refresh the CLIProxyAPI model catalog",
 		handler: async (_args: string, ctx: ExtensionContext) => {
 			try {
-				const refreshed = await refreshCatalog(connection);
-				registerProvider(connection, refreshed);
+				const refreshed = await refreshCatalog(connection, undefined, true);
+				// An empty registration does not replace previous host overlays.
+				pi.unregisterProvider(providerId);
+				const clearSnapshot = registerProvider(connection, refreshed, true);
+				try {
+					// Replace the host's independent dynamic-discovery cache with the same snapshot.
+					await ctx.modelRegistry.refreshDiscoverableProviders([providerId], "online");
+				} finally {
+					clearSnapshot();
+				}
 				ctx.ui.notify(`CLIProxyAPI models refreshed: ${refreshed.models.length} model(s).`, "info");
 			} catch (error) {
 				const message = error instanceof Error ? error.message : String(error);

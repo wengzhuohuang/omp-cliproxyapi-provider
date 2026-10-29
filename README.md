@@ -112,15 +112,17 @@ Reasoning levels use omp's canonical ladder (`minimal`, `low`, `medium`, `high`,
 
 The proxy does not publish prices, so every model is registered with zero cost.
 
-The catalog is cached in `<agent dir>/cliproxyapi-models.json` (never the API key). A
-model that disappears from one listing is retained for up to seven days, so a transient
-proxy hiccup does not empty `/model`.
+The catalog is cached in `<agent dir>/cliproxyapi-models.json` (never the API key). During
+automatic refresh, a model that disappears from one listing is retained for up to seven
+days to tolerate transient proxy hiccups. `/cliproxyapi-refresh` instead replaces the
+catalog immediately with the current listing, including an empty listing; failed requests
+leave the existing catalog unchanged.
 
 ## Commands
 
 | Command | Effect |
 | ------- | ------ |
-| `/cliproxyapi-refresh` | Force an immediate catalog refresh and re-register the models |
+| `/cliproxyapi-refresh` | Force an immediate catalog refresh, removing models absent from the current listing |
 | `/cliproxyapi-pause` | Stop provider requests: new prompts are refused and a running turn is aborted at its next request boundary |
 | `/cliproxyapi-continue` | Resume provider requests |
 
